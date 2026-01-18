@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프로 ND 필터 계산기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+        }
+        .dark {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #60a5fa;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+        .card {
+            background-color: var(--card-bg);
+            transition: background-color 0.3s ease;
+        }
+        input, select {
+            background-color: transparent;
+            border: 1px solid #cbd5e1;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            color: inherit;
+        }
+        .dark input, .dark select {
+            border-color: #475569;
+        }
+        .tip-box {
+            border-left: 3px solid #3b82f6;
+            padding-left: 0.75rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4 sm:px-6">
+
+    <div class="max-w-3xl mx-auto">
+        <!-- 상단 헤더 -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-black tracking-tight text-blue-500">ND CALC PRO</h1>
+                <p class="text-sm opacity-70">장노출 사진을 위한 정밀 계산 가이드</p>
+            </div>
+            <button id="themeToggle" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                <svg id="sunIcon" class="w-6 h-6 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-11.314l.707.707m11.314 11.314l.707.707M12 8a4 4 0 110 8 4 4 0 010-8z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                <svg id="moonIcon" class="w-6 h-6 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <!-- 계산 영역 (좌측/상단) -->
+            <div class="lg:col-span-3 space-y-6">
+                <div class="card p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <span>⚙️</span> 노출 설정
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5 opacity-80">기준 셔터 속도 (필터 미장착 시)</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="shutterInput" value="60" 
+                                       inputmode="decimal"
+                                       class="w-full focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                                <select id="shutterType" class="w-32 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                                    <option value="frac">1/x 초</option>
+                                    <option value="sec">초</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1.5 opacity-80">ND 필터 #1</label>
+                                <select id="nd1" class="w-full focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                                    <option value="0">사용 안 함</option>
+                                    <option value="1">ND2 (1스탑)</option>
+                                    <option value="2">ND4 (2스탑)</option>
+                                    <option value="3">ND8 (3스탑)</option>
+                                    <option value="4">ND16 (4스탑)</option>
+                                    <option value="6">ND64 (6스탑)</option>
+                                    <option value="10" selected>ND1000 (10스탑)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1.5 opacity-80">ND 필터 #2</label>
+                                <select id="nd2" class="w-full focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                                    <option value="0" selected>사용 안 함</option>
+                                    <option value="1">ND2 (1스탑)</option>
+                                    <option value="2">ND4 (2스탑)</option>
+                                    <option value="3">ND8 (3스탑)</option>
+                                    <option value="4">ND16 (4스탑)</option>
+                                    <option value="6">ND64 (6스탑)</option>
+                                    <option value="10">ND1000 (10스탑)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-8 rounded-2xl shadow-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white border-none">
+                    <p class="text-blue-100 text-sm font-medium mb-2 uppercase tracking-widest text-center">Final Exposure Time</p>
+                    <h2 id="finalShutter" class="text-5xl font-black text-center tabular-nums">15.0s</h2>
+                    <div class="flex justify-center mt-4">
+                        <p id="totalStops" class="text-blue-200 text-sm font-medium bg-blue-900/40 py-1.5 px-4 rounded-full">총 10스탑 감소</p>
+                    </div>
+                </div>
+
+                <!-- ND 개념 확장 -->
+                <div class="card p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800">
+                    <h3 class="font-bold mb-4 flex items-center gap-2">
+                        <span>💡</span> ND 스탑 및 광량 감소표
+                    </h3>
+                    <div class="overflow-x-auto text-xs">
+                        <table class="w-full text-left">
+                            <thead class="border-b border-slate-200 dark:border-slate-700">
+                                <tr class="opacity-60">
+                                    <th class="py-2">필터 등급</th>
+                                    <th class="py-2">노출 감소</th>
+                                    <th class="py-2">광량 투과율</th>
+                                </tr>
+                            </thead>
+                            <tbody class="opacity-80">
+                                <tr class="border-b border-slate-100 dark:border-slate-800">
+                                    <td class="py-2">ND8</td><td class="py-2">3 Stops</td><td class="py-2">12.5%</td>
+                                </tr>
+                                <tr class="border-b border-slate-100 dark:border-slate-800">
+                                    <td class="py-2">ND64</td><td class="py-2">6 Stops</td><td class="py-2">1.56%</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2">ND1000</td><td class="py-2">10 Stops</td><td class="py-2">0.1%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="mt-3 text-[10px] opacity-60 leading-normal">* 필터 중첩 시: ND1000(10) + ND64(6) = 16스탑. 셔터 속도가 기하급수적으로 늘어납니다.</p>
+                </div>
+            </div>
+
+            <!-- 촬영 팁 영역 (우측/하단) -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="card p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800">
+                    <h3 class="font-bold mb-5 flex items-center gap-2 text-blue-500">
+                        <span>📸</span> 전문가용 촬영 가이드
+                    </h3>
+                    
+                    <div class="space-y-6">
+                        <div class="tip-box">
+                            <p class="font-bold text-sm mb-1 text-slate-900 dark:text-slate-100">🌊 갯골 및 물 흐름</p>
+                            <p class="text-xs opacity-80 leading-relaxed">
+                                <strong>안개 효과:</strong> 15초~30초 이상. 수면이 거울처럼 매끄러워지며 고요한 분위기를 연출합니다.<br>
+                                <strong>질감 강조:</strong> 물이 빠르게 빠져나갈 때는 1~4초 사이로 조절하여 물줄기의 궤적을 살리세요.
+                            </p>
+                        </div>
+
+                        <div class="tip-box">
+                            <p class="font-bold text-sm mb-1 text-slate-900 dark:text-slate-100">🏖️ 파도와 바위 (바다)</p>
+                            <p class="text-xs opacity-80 leading-relaxed">
+                                <strong>파도의 궤적:</strong> 0.5초~2초. 바위에 부딪혀 하얗게 부서지는 포말의 선을 드라마틱하게 담을 수 있습니다.<br>
+                                <strong>운해(雲海) 효과:</strong> 30초 이상. 거친 파도를 구름 위 풍경처럼 몽환적으로 표현합니다.
+                            </p>
+                        </div>
+
+                        <div class="tip-box">
+                            <p class="font-bold text-sm mb-1 text-slate-900 dark:text-slate-100">🏞️ 폭포 및 계곡</p>
+                            <p class="text-xs opacity-80 leading-relaxed">
+                                <strong>실크 효과:</strong> 1/4초~2초. 물이 떨어지는 속도에 따라 다르지만 너무 길면 디테일이 뭉개지니 주의하세요.
+                            </p>
+                        </div>
+
+                        <div class="tip-box">
+                            <p class="font-bold text-sm mb-1 text-slate-900 dark:text-slate-100">🏙️ 도심 야경 및 궤적</p>
+                            <p class="text-xs opacity-80 leading-relaxed">
+                                <strong>차량 궤적:</strong> 15~30초. 도로 상황에 따라 셔터를 열어두어 빛의 선을 끊김 없이 담는 것이 포인트입니다.
+                            </p>
+                        </div>
+
+                        <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl">
+                            <p class="font-bold text-xs mb-2 text-blue-600 dark:text-blue-400">🚨 장노출 체크리스트</p>
+                            <ul class="text-[10px] space-y-1 opacity-90 leading-normal">
+                                <li>• 삼각대는 흔들림 없는 지면에 단단히 고정</li>
+                                <li>• 미러리스는 상관없으나 DSLR은 뷰파인더 가림막 필수</li>
+                                <li>• 렌즈의 손떨림 보정(IS/VR) 기능은 반드시 OFF</li>
+                                <li>• 릴리즈 또는 2초 타이머 셔터 사용 권장</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center text-sm opacity-50">
+            <p>©DOKSOLSOL ND Exposure Guide</p>
+        </footer>
+    </div>
+
+    <script>
+        const shutterInput = document.getElementById('shutterInput');
+        const shutterType = document.getElementById('shutterType');
+        const nd1 = document.getElementById('nd1');
+        const nd2 = document.getElementById('nd2');
+        const finalShutterDisplay = document.getElementById('finalShutter');
+        const totalStopsDisplay = document.getElementById('totalStops');
+        const themeToggle = document.getElementById('themeToggle');
+
+        // 테마 관리
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.classList.add('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+        });
+
+        function calculate() {
+            let baseSec = parseFloat(shutterInput.value);
+            if (isNaN(baseSec) || baseSec <= 0) return;
+
+            if (shutterType.value === 'frac') {
+                baseSec = 1 / baseSec;
+            }
+
+            const stops1 = parseInt(nd1.value);
+            const stops2 = parseInt(nd2.value);
+            const totalStops = stops1 + stops2;
+            
+            const calculatedSeconds = baseSec * Math.pow(2, totalStops);
+            const factor = Math.pow(2, totalStops);
+
+            totalStopsDisplay.innerText = `총 ${totalStops}스탑 감소 (광량 1/${factor.toLocaleString()} 배)`;
+
+            if (calculatedSeconds >= 3600) {
+                const hrs = Math.floor(calculatedSeconds / 3600);
+                const mins = Math.floor((calculatedSeconds % 3600) / 60);
+                const secs = Math.round(calculatedSeconds % 60);
+                finalShutterDisplay.innerText = `${hrs}h ${mins}m ${secs}s`;
+            } else if (calculatedSeconds >= 60) {
+                const mins = Math.floor(calculatedSeconds / 60);
+                const secs = Math.round(calculatedSeconds % 60);
+                finalShutterDisplay.innerText = `${mins}m ${secs}s`;
+            } else if (calculatedSeconds >= 1) {
+                finalShutterDisplay.innerText = `${calculatedSeconds.toFixed(1)}s`;
+            } else {
+                finalShutterDisplay.innerText = `1/${Math.round(1/calculatedSeconds)}s`;
+            }
+        }
+
+        [shutterInput, shutterType, nd1, nd2].forEach(el => {
+            el.addEventListener('input', calculate);
+        });
+
+        calculate();
+    </script>
+</body>
+</html>
