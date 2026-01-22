@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>프로 ND 필터 계산기</title>
+    <title>프로 ND & CPL 노출 계산기</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -43,16 +43,43 @@
             border-left: 3px solid #3b82f6;
             padding-left: 0.75rem;
         }
+        /* 토글 스위치 스타일 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px; width: 16px;
+            left: 4px; bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #3b82f6; }
+        input:checked + .slider:before { transform: translateX(26px); }
     </style>
 </head>
 <body class="min-h-screen py-8 px-4 sm:px-6">
 
     <div class="max-w-3xl mx-auto">
-        <!-- 상단 헤더 -->
+        <!-- Header -->
         <div class="flex justify-between items-center mb-8">
             <div>
-                <h1 class="text-3xl font-black tracking-tight text-blue-500">ND CALC PRO</h1>
-                <p class="text-sm opacity-70">장노출 사진을 위한 정밀 계산 가이드</p>
+                <h1 class="text-3xl font-black tracking-tight text-blue-500 uppercase">ND-CPL Calc</h1>
+                <p class="text-sm opacity-70">필터 중첩 및 장노출 정밀 계산기</p>
             </div>
             <button id="themeToggle" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
                 <svg id="sunIcon" class="w-6 h-6 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-11.314l.707.707m11.314 11.314l.707.707M12 8a4 4 0 110 8 4 4 0 010-8z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
@@ -61,16 +88,17 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <!-- 계산 영역 (좌측/상단) -->
+            <!-- Left Column: Inputs & Result -->
             <div class="lg:col-span-3 space-y-6">
                 <div class="card p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800">
                     <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-                        <span>⚙️</span> 노출 설정
+                        <span>⚙️</span> 노출 및 필터 구성
                     </h2>
                     
-                    <div class="space-y-4">
+                    <div class="space-y-5">
+                        <!-- Base Shutter Speed -->
                         <div>
-                            <label class="block text-sm font-medium mb-1.5 opacity-80">기준 셔터 속도 (필터 미장착 시)</label>
+                            <label class="block text-sm font-medium mb-1.5 opacity-80">기준 셔터 속도 (필터 없음)</label>
                             <div class="flex gap-2">
                                 <input type="number" id="shutterInput" value="60" 
                                        inputmode="decimal"
@@ -82,6 +110,7 @@
                             </div>
                         </div>
 
+                        <!-- ND Filters Selection -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium mb-1.5 opacity-80">ND 필터 #1</label>
@@ -108,50 +137,47 @@
                                 </select>
                             </div>
                         </div>
+
+                        <!-- CPL Filter Toggle -->
+                        <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xl">🕶️</span>
+                                <div>
+                                    <p class="text-sm font-bold">CPL 필터 장착</p>
+                                    <p class="text-[10px] opacity-60">일반적으로 약 1.3스탑이 추가됩니다.</p>
+                                </div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="cplToggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Result Card -->
                 <div class="card p-8 rounded-2xl shadow-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white border-none">
-                    <p class="text-blue-100 text-sm font-medium mb-2 uppercase tracking-widest text-center">Final Exposure Time</p>
+                    <p class="text-blue-100 text-sm font-medium mb-2 uppercase tracking-widest text-center">최종 노출 시간</p>
                     <h2 id="finalShutter" class="text-5xl font-black text-center tabular-nums">15.0s</h2>
                     <div class="flex justify-center mt-4">
                         <p id="totalStops" class="text-blue-200 text-sm font-medium bg-blue-900/40 py-1.5 px-4 rounded-full">총 10스탑 감소</p>
                     </div>
                 </div>
-
-                <!-- ND 개념 확장 -->
-                <div class="card p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800">
-                    <h3 class="font-bold mb-4 flex items-center gap-2">
-                        <span>💡</span> ND 스탑 및 광량 감소표
-                    </h3>
-                    <div class="overflow-x-auto text-xs">
-                        <table class="w-full text-left">
-                            <thead class="border-b border-slate-200 dark:border-slate-700">
-                                <tr class="opacity-60">
-                                    <th class="py-2">필터 등급</th>
-                                    <th class="py-2">노출 감소</th>
-                                    <th class="py-2">광량 투과율</th>
-                                </tr>
-                            </thead>
-                            <tbody class="opacity-80">
-                                <tr class="border-b border-slate-100 dark:border-slate-800">
-                                    <td class="py-2">ND8</td><td class="py-2">3 Stops</td><td class="py-2">12.5%</td>
-                                </tr>
-                                <tr class="border-b border-slate-100 dark:border-slate-800">
-                                    <td class="py-2">ND64</td><td class="py-2">6 Stops</td><td class="py-2">1.56%</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-2">ND1000</td><td class="py-2">10 Stops</td><td class="py-2">0.1%</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <p class="mt-3 text-[10px] opacity-60 leading-normal">* 필터 중첩 시: ND1000(10) + ND64(6) = 16스탑. 셔터 속도가 기하급수적으로 늘어납니다.</p>
-                </div>
             </div>
 
-            <!-- 촬영 팁 영역 (우측/하단) -->
+            <!-- Right Column: Info & Tips -->
             <div class="lg:col-span-2 space-y-6">
+                <!-- CPL Tip -->
+                <div class="card p-5 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 bg-orange-50/50 dark:bg-orange-950/10">
+                    <h3 class="font-bold mb-2 flex items-center gap-2 text-orange-600 dark:text-orange-400">
+                        <span>⚠️</span> CPL 사용 시 주의사항
+                    </h3>
+                    <p class="text-xs opacity-80 leading-relaxed">
+                        CPL 필터는 빛의 편광을 차단하는 과정에서 <strong>광량을 약 1스탑~1.5스탑 정도 추가로 소비</strong>합니다. 장노출 촬영 시 CPL을 끼우면 예상보다 사진이 어둡게 나올 수 있으니 위 계산기에서 CPL 옵션을 켜주세요.
+                    </p>
+                </div>
+
+                <!-- Expertise Guide -->
                 <div class="card p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800">
                     <h3 class="font-bold mb-5 flex items-center gap-2 text-blue-500">
                         <span>📸</span> 전문가용 촬영 가이드
@@ -161,30 +187,16 @@
                         <div class="tip-box">
                             <p class="font-bold text-sm mb-1 text-slate-900 dark:text-slate-100">🌊 갯골 및 물 흐름</p>
                             <p class="text-xs opacity-80 leading-relaxed">
-                                <strong>안개 효과:</strong> 15초~30초 이상. 수면이 거울처럼 매끄러워지며 고요한 분위기를 연출합니다.<br>
-                                <strong>질감 강조:</strong> 물이 빠르게 빠져나갈 때는 1~4초 사이로 조절하여 물줄기의 궤적을 살리세요.
+                                <strong>안개 효과:</strong> 15~30초 이상. 수면이 매끄러워지며 고요한 분위기를 연출합니다.<br>
+                                <strong>질감 강조:</strong> 물이 빠르게 빠져나갈 때는 1~4초 사이로 조절하여 궤적을 살리세요.
                             </p>
                         </div>
 
                         <div class="tip-box">
-                            <p class="font-bold text-sm mb-1 text-slate-900 dark:text-slate-100">🏖️ 파도와 바위 (바다)</p>
+                            <p class="font-bold text-sm mb-1 text-slate-900 dark:text-slate-100">🏖️ 파도와 바다</p>
                             <p class="text-xs opacity-80 leading-relaxed">
-                                <strong>파도의 궤적:</strong> 0.5초~2초. 바위에 부딪혀 하얗게 부서지는 포말의 선을 드라마틱하게 담을 수 있습니다.<br>
-                                <strong>운해(雲海) 효과:</strong> 30초 이상. 거친 파도를 구름 위 풍경처럼 몽환적으로 표현합니다.
-                            </p>
-                        </div>
-
-                        <div class="tip-box">
-                            <p class="font-bold text-sm mb-1 text-slate-900 dark:text-slate-100">🏞️ 폭포 및 계곡</p>
-                            <p class="text-xs opacity-80 leading-relaxed">
-                                <strong>실크 효과:</strong> 1/4초~2초. 물이 떨어지는 속도에 따라 다르지만 너무 길면 디테일이 뭉개지니 주의하세요.
-                            </p>
-                        </div>
-
-                        <div class="tip-box">
-                            <p class="font-bold text-sm mb-1 text-slate-900 dark:text-slate-100">🏙️ 도심 야경 및 궤적</p>
-                            <p class="text-xs opacity-80 leading-relaxed">
-                                <strong>차량 궤적:</strong> 15~30초. 도로 상황에 따라 셔터를 열어두어 빛의 선을 끊김 없이 담는 것이 포인트입니다.
+                                <strong>파도의 궤적:</strong> 0.5~2초. 바위에 부딪혀 부서지는 포말의 선을 드라마틱하게 담습니다.<br>
+                                <strong>운해 효과:</strong> 30초 이상. 거친 파도를 구름처럼 몽환적으로 표현합니다.
                             </p>
                         </div>
 
@@ -203,7 +215,7 @@
         </div>
 
         <footer class="mt-12 text-center text-sm opacity-50">
-            <p>©DOKSOLSOL ND Exposure Guide</p>
+            <p>© DOKSOLSOL ND-CPL Exposure Guide</p>
         </footer>
     </div>
 
@@ -212,6 +224,7 @@
         const shutterType = document.getElementById('shutterType');
         const nd1 = document.getElementById('nd1');
         const nd2 = document.getElementById('nd2');
+        const cplToggle = document.getElementById('cplToggle');
         const finalShutterDisplay = document.getElementById('finalShutter');
         const totalStopsDisplay = document.getElementById('totalStops');
         const themeToggle = document.getElementById('themeToggle');
@@ -235,12 +248,15 @@
 
             const stops1 = parseInt(nd1.value);
             const stops2 = parseInt(nd2.value);
-            const totalStops = stops1 + stops2;
+            const cplStops = cplToggle.checked ? 1.3 : 0; // CPL은 대략 1.3스탑으로 계산
             
+            const totalStops = stops1 + stops2 + cplStops;
+            
+            // T_final = T_base * 2^totalStops
             const calculatedSeconds = baseSec * Math.pow(2, totalStops);
             const factor = Math.pow(2, totalStops);
 
-            totalStopsDisplay.innerText = `총 ${totalStops}스탑 감소 (광량 1/${factor.toLocaleString()} 배)`;
+            totalStopsDisplay.innerText = `총 ${totalStops.toFixed(1)}스탑 감소 (광량 약 1/${Math.round(factor).toLocaleString()} 배)`;
 
             if (calculatedSeconds >= 3600) {
                 const hrs = Math.floor(calculatedSeconds / 3600);
@@ -258,7 +274,7 @@
             }
         }
 
-        [shutterInput, shutterType, nd1, nd2].forEach(el => {
+        [shutterInput, shutterType, nd1, nd2, cplToggle].forEach(el => {
             el.addEventListener('input', calculate);
         });
 
