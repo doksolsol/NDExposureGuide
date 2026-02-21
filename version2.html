@@ -73,13 +73,13 @@
             box-shadow: 0 10px 40px -10px rgba(0,0,0,0.12);
             z-index: 50;
             border: 1px solid rgba(0,0,0,0.05);
-            color: #18181b; /* 기본 텍스트 색상 강제 */
+            color: #18181b;
         }
         .dark .floating-result {
             background: #18181b;
             border-color: rgba(255,255,255,0.1);
             box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
-            color: #f4f4f5; /* 다크모드 텍스트 색상 */
+            color: #f4f4f5;
         }
 
         @media (min-width: 1024px) {
@@ -244,80 +244,82 @@
             { label: '15"', value: 15 }, { label: '30"', value: 30 }
         ];
 
-        let currentND1 = 10;
-        let currentND2 = 0;
-        let currentShutter = 6;
+        let state = {
+            currentND1: 10,
+            currentND2: 0,
+            currentShutter: 6
+        };
+
         const itemWidth = 100;
 
-        function initPicker(id, data, defaultIdx, displayId, onSelect) {
+        function initPicker(id, data, defaultIdx, displayId, stateKey) {
             const container = document.getElementById(id);
             const display = document.getElementById(displayId);
-            container.innerHTML = '';
             
-            // 컨테이너 너비를 확보하여 스크롤 범위를 정확히 계산
-            const halfContainer = container.parentElement.offsetWidth / 2;
-            const spacerWidth = halfContainer - (itemWidth / 2);
+            const refreshSpacers = () => {
+                container.innerHTML = '';
+                const containerWidth = container.getBoundingClientRect().width || container.parentElement.offsetWidth;
+                const spacerWidth = (containerWidth / 2) - (itemWidth / 2);
 
-            const leftSpacer = document.createElement('div');
-            leftSpacer.className = 'shrink-0';
-            leftSpacer.style.width = `${spacerWidth}px`;
-            container.appendChild(leftSpacer);
+                const leftSpacer = document.createElement('div');
+                leftSpacer.className = 'shrink-0';
+                leftSpacer.style.width = `${spacerWidth}px`;
+                container.appendChild(leftSpacer);
 
-            const items = data.map((d, i) => {
-                const el = document.createElement('div');
-                el.className = `picker-item snap-center shrink-0 text-center cursor-pointer text-base font-medium`;
-                el.style.width = `${itemWidth}px`;
-                el.innerText = d.label;
-                el.onclick = () => container.scrollTo({ left: i * itemWidth, behavior: 'smooth' });
-                container.appendChild(el);
-                return el;
-            });
+                const items = data.map((d, i) => {
+                    const el = document.createElement('div');
+                    el.className = `picker-item snap-center shrink-0 text-center cursor-pointer text-base font-medium`;
+                    el.style.width = `${itemWidth}px`;
+                    el.innerText = d.label;
+                    el.onclick = () => scrollToIdx(i);
+                    container.appendChild(el);
+                    return el;
+                });
 
-            const rightSpacer = document.createElement('div');
-            rightSpacer.className = 'shrink-0';
-            rightSpacer.style.width = `${spacerWidth}px`;
-            container.appendChild(rightSpacer);
+                const rightSpacer = document.createElement('div');
+                rightSpacer.className = 'shrink-0';
+                rightSpacer.style.width = `${spacerWidth}px`;
+                container.appendChild(rightSpacer);
 
-            let timer;
+                return items;
+            };
+
+            let items = refreshSpacers();
+
+            const scrollToIdx = (idx, behavior = 'smooth') => {
+                container.scrollTo({ left: idx * itemWidth, behavior });
+            };
+
+            let scrollTimer;
             container.onscroll = () => {
-                // 정확한 인덱스 계산 (scrollLeft가 음수가 되지 않도록 방지)
                 const scrollLeft = Math.max(0, container.scrollLeft);
                 const idx = Math.min(data.length - 1, Math.round(scrollLeft / itemWidth));
                 
                 items.forEach((el, i) => {
-                    if (i === idx) {
-                        el.classList.add('active');
-                    } else {
-                        el.classList.remove('active');
-                    }
+                    if (i === idx) el.classList.add('active');
+                    else el.classList.remove('active');
                 });
 
-                if (display.innerText !== data[idx].label) {
+                if (state[stateKey] !== idx) {
+                    state[stateKey] = idx;
                     display.innerText = data[idx].label;
-                    clearTimeout(timer);
-                    timer = setTimeout(() => onSelect(idx), 30);
+                    clearTimeout(scrollTimer);
+                    scrollTimer = setTimeout(calculate, 30);
                 }
             };
 
-            // 초기 위치 설정 (DOM 렌더링 후 실행)
-            setTimeout(() => {
-                container.scrollTo({ left: defaultIdx * itemWidth });
-            }, 100);
-
             return { 
-                scroll: (idx) => container.scrollTo({ left: idx * itemWidth, behavior: 'smooth' }),
-                refreshSpacers: () => {
-                    const newHalf = container.parentElement.offsetWidth / 2;
-                    const newSpacer = newHalf - (itemWidth / 2);
-                    leftSpacer.style.width = `${newSpacer}px`;
-                    rightSpacer.style.width = `${newSpacer}px`;
-                }
+                scroll: scrollToIdx, 
+                refresh: () => { 
+                    items = refreshSpacers(); 
+                    scrollToIdx(state[stateKey], 'auto');
+                } 
             };
         }
 
         function calculate() {
-            const base = shutterSpeeds[currentShutter].value;
-            const stops = ndFilters[currentND1].stops + ndFilters[currentND2].stops + (document.getElementById('cplToggle').checked ? 1.3 : 0);
+            const base = shutterSpeeds[state.currentShutter].value;
+            const stops = ndFilters[state.currentND1].stops + ndFilters[state.currentND2].stops + (document.getElementById('cplToggle').checked ? 1.3 : 0);
             const res = base * Math.pow(2, stops);
 
             document.getElementById('totalStops').innerText = `총 ${stops.toFixed(1)} Stop 감소`;
@@ -334,9 +336,21 @@
             }
         }
 
-        const p1 = initPicker('nd1Picker', ndFilters, 10, 'nd1Value', (v) => { currentND1 = v; calculate(); });
-        const p2 = initPicker('nd2Picker', ndFilters, 0, 'nd2Value', (v) => { currentND2 = v; calculate(); });
-        const p3 = initPicker('shutterPicker', shutterSpeeds, 6, 'baseValue', (v) => { currentShutter = v; calculate(); });
+        let pickers = {};
+
+        window.onload = () => {
+            pickers.p1 = initPicker('nd1Picker', ndFilters, 10, 'nd1Value', 'currentND1');
+            pickers.p2 = initPicker('nd2Picker', ndFilters, 0, 'nd2Value', 'currentND2');
+            pickers.p3 = initPicker('shutterPicker', shutterSpeeds, 6, 'baseValue', 'currentShutter');
+
+            // 초기 위치 강제 조정 (모바일 브라우저 렌더링 대기)
+            setTimeout(() => {
+                pickers.p1.refresh();
+                pickers.p2.refresh();
+                pickers.p3.refresh();
+                calculate();
+            }, 100);
+        };
 
         document.getElementById('cplToggle').onchange = calculate;
         document.getElementById('themeToggle').onclick = () => {
@@ -345,18 +359,19 @@
 
         document.getElementById('resetBtn').onclick = () => {
             document.getElementById('cplToggle').checked = false;
-            p1.scroll(10); p2.scroll(0); p3.scroll(6);
+            pickers.p1.scroll(10);
+            pickers.p2.scroll(0);
+            pickers.p3.scroll(6);
             calculate();
         };
 
-        // 윈도우 리사이즈 시 스페이서 갱신
         window.addEventListener('resize', () => {
-            p1.refreshSpacers();
-            p2.refreshSpacers();
-            p3.refreshSpacers();
+            if (pickers.p1) {
+                pickers.p1.refresh();
+                pickers.p2.refresh();
+                pickers.p3.refresh();
+            }
         });
-
-        calculate();
     </script>
 </body>
 </html>
