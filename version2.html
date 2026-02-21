@@ -1,505 +1,362 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ND Calc Pro</title>
-    <link
-      rel="stylesheet"
-      as="style"
-      crossorigin
-      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
-    />
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      :root {
-        --bg-color: #ffffff;
-        --card-bg: #ffffff;
-        --text-main: #18181b;
-        --text-muted: #a1a1aa;
-        --accent: #3b82f6;
-        --picker-mask: linear-gradient(
-          to right,
-          rgba(255, 255, 255, 0) 0%,
-          rgba(255, 255, 255, 1) 25%,
-          rgba(255, 255, 255, 1) 75%,
-          rgba(255, 255, 255, 0) 100%
-        );
-      }
+        :root {
+            --bg-color: #ffffff;
+            --card-bg: #ffffff;
+            --text-main: #18181b;
+            --text-muted: #a1a1aa;
+            --accent: #3b82f6;
+            --picker-mask: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 75%, rgba(255,255,255,0) 100%);
+        }
 
-      .dark {
-        --bg-color: #09090b;
-        --card-bg: #18181b;
-        --text-main: #f4f4f5;
-        --text-muted: #52525b;
-        --accent: #60a5fa;
-        --picker-mask: linear-gradient(
-          to right,
-          rgba(9, 9, 11, 0) 0%,
-          rgba(9, 9, 11, 1) 25%,
-          rgba(9, 9, 11, 1) 75%,
-          rgba(9, 9, 11, 0) 100%
-        );
-      }
+        .dark {
+            --bg-color: #09090b;
+            --card-bg: #18181b;
+            --text-main: #f4f4f5;
+            --text-muted: #52525b;
+            --accent: #60a5fa;
+            --picker-mask: linear-gradient(to right, rgba(9,9,11,0) 0%, rgba(9,9,11,1) 25%, rgba(9,9,11,1) 75%, rgba(9,9,11,0) 100%);
+        }
 
-      body {
-        font-family: "Pretendard", sans-serif;
-        background-color: var(--bg-color);
-        color: var(--text-main);
-        transition: background-color 0.3s ease;
-        overflow-x: hidden;
-        /* 여백 확보를 위해 하단 결과창 높이만큼 패딩 추가 */
-        padding-bottom: 160px;
-      }
-
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-
-      /* Picker Styling */
-      .picker-container {
-        -webkit-mask-image: var(--picker-mask);
-        mask-image: var(--picker-mask);
-      }
-
-      .picker-item {
-        transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
-        opacity: 0.3;
-        transform: scale(0.8);
-      }
-
-      .picker-item.active {
-        transform: scale(1.3);
-        font-weight: 800;
-        color: var(--text-main);
-        opacity: 1;
-      }
-
-      /* Toggle Switch Custom */
-      #cplToggle:checked ~ .toggle-bg {
-        background-color: var(--accent);
-      }
-      #cplToggle:checked ~ .toggle-dot {
-        transform: translateX(100%);
-      }
-
-      /* Floating Result Card */
-      .floating-result {
-        position: fixed;
-        bottom: 24px;
-        left: 5%;
-        right: 5%;
-        background: #ffffff;
-        border-radius: 24px;
-        box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.12);
-        z-index: 50;
-        border: 1px solid rgba(0, 0, 0, 0.05);
-      }
-      .dark .floating-result {
-        background: #18181b;
-        border-color: rgba(255, 255, 255, 0.1);
-        box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
-      }
-
-      @media (min-width: 1024px) {
         body {
-          padding-bottom: 0;
+            font-family: 'Pretendard', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            transition: background-color 0.3s ease;
+            overflow-x: hidden;
+            padding-bottom: 160px;
         }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Picker Styling */
+        .picker-container {
+            -webkit-mask-image: var(--picker-mask);
+            mask-image: var(--picker-mask);
+            touch-action: pan-x;
+        }
+
+        .picker-item {
+            transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+            opacity: 0.3;
+            transform: scale(0.8);
+            color: var(--text-muted);
+        }
+        
+        .picker-item.active {
+            transform: scale(1.3);
+            font-weight: 800;
+            color: var(--text-main);
+            opacity: 1;
+        }
+
+        /* Toggle Switch Custom */
+        #cplToggle:checked ~ .toggle-bg { background-color: var(--accent); }
+        #cplToggle:checked ~ .toggle-dot { transform: translateX(100%); }
+
+        /* Floating Result Card */
         .floating-result {
-          position: relative;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          margin-top: 40px;
+            position: fixed;
+            bottom: 24px;
+            left: 5%;
+            right: 5%;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.12);
+            z-index: 50;
+            border: 1px solid rgba(0,0,0,0.05);
+            color: #18181b; /* 기본 텍스트 색상 강제 */
         }
-      }
+        .dark .floating-result {
+            background: #18181b;
+            border-color: rgba(255,255,255,0.1);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+            color: #f4f4f5; /* 다크모드 텍스트 색상 */
+        }
+
+        @media (min-width: 1024px) {
+            body { padding-bottom: 0; }
+            .floating-result {
+                position: relative;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                margin-top: 40px;
+            }
+        }
     </style>
-  </head>
-  <body class="min-h-screen">
-    <div
-      class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 pt-6 px-4 lg:px-8"
-    >
-      <!-- Main UI -->
-      <div class="w-full lg:w-1/2 lg:max-w-md mx-auto">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
-          <h1 class="text-2xl font-black tracking-tight uppercase">
-            ND-Calc Pro
-          </h1>
-          <button
-            id="themeToggle"
-            class="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-full"
-          >
-            <svg
-              id="sunIcon"
-              class="w-5 h-5 hidden dark:block"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-11.314l.707.707m11.314 11.314l.707.707M12 8a4 4 0 110 8 4 4 0 010-8z"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              ></path>
-            </svg>
-            <svg
-              id="moonIcon"
-              class="w-5 h-5 dark:hidden"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              ></path>
-            </svg>
-          </button>
+</head>
+<body class="min-h-screen">
+
+    <div class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 pt-6 px-4 lg:px-8">
+        
+        <!-- Main UI -->
+        <div class="w-full lg:w-1/2 lg:max-w-md mx-auto">
+            
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-black tracking-tight uppercase">ND-Calc Pro</h1>
+                <button id="themeToggle" class="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-full transition-colors">
+                    <svg id="sunIcon" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-11.314l.707.707m11.314 11.314l.707.707M12 8a4 4 0 110 8 4 4 0 010-8z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    <svg id="moonIcon" class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
+            </div>
+
+            <!-- Controls Layout -->
+            <div class="space-y-6">
+                
+                <!-- CPL Switch -->
+                <div class="flex items-center justify-between px-2">
+                    <div>
+                        <span class="text-base font-bold">CPL Filter</span>
+                        <p class="text-[10px] text-zinc-400">1.3 Stop 추가 차단</p>
+                    </div>
+                    <label for="cplToggle" class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="cplToggle" class="sr-only">
+                        <div class="toggle-bg w-14 h-8 bg-zinc-200 dark:bg-zinc-800 rounded-full transition-colors duration-300"></div>
+                        <div class="toggle-dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 shadow-sm"></div>
+                    </label>
+                </div>
+
+                <!-- Picker Sections -->
+                <div class="space-y-4">
+                    <!-- Filter 1 -->
+                    <div class="bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl py-3 border border-transparent dark:border-zinc-800">
+                        <div class="px-5 mb-1 flex justify-between">
+                            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Filter 01</span>
+                            <span id="nd1Value" class="text-[10px] font-bold text-blue-500">ND1000</span>
+                        </div>
+                        <div class="picker-container relative w-full h-16 overflow-hidden">
+                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-8 border-y border-zinc-200 dark:border-zinc-700 pointer-events-none"></div>
+                            <div id="nd1Picker" class="picker-scroll flex overflow-x-auto snap-x snap-mandatory h-full items-center no-scrollbar"></div>
+                        </div>
+                    </div>
+
+                    <!-- Filter 2 -->
+                    <div class="bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl py-3 border border-transparent dark:border-zinc-800">
+                        <div class="px-5 mb-1 flex justify-between">
+                            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Filter 02</span>
+                            <span id="nd2Value" class="text-[10px] font-bold text-blue-500">OFF</span>
+                        </div>
+                        <div class="picker-container relative w-full h-16 overflow-hidden">
+                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-8 border-y border-zinc-200 dark:border-zinc-700 pointer-events-none"></div>
+                            <div id="nd2Picker" class="picker-scroll flex overflow-x-auto snap-x snap-mandatory h-full items-center no-scrollbar"></div>
+                        </div>
+                    </div>
+
+                    <!-- Base Shutter -->
+                    <div class="bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl py-3 border border-transparent dark:border-zinc-800">
+                        <div class="px-5 mb-1 flex justify-between">
+                            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Base Shutter</span>
+                            <span id="baseValue" class="text-[10px] font-bold text-blue-500">1/60</span>
+                        </div>
+                        <div class="picker-container relative w-full h-16 overflow-hidden">
+                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-8 border-y border-zinc-200 dark:border-zinc-700 pointer-events-none"></div>
+                            <div id="shutterPicker" class="picker-scroll flex overflow-x-auto snap-x snap-mandatory h-full items-center no-scrollbar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floating Result Area -->
+            <div class="floating-result p-6 flex items-center justify-between">
+                <button id="resetBtn" class="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center active:scale-95 transition-all">
+                    <svg class="w-5 h-5 text-zinc-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
+                <div class="text-right">
+                    <p class="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-0.5">Final Shutter</p>
+                    <div id="finalShutter" class="text-4xl font-black tabular-nums tracking-tighter leading-none dark:text-white">--</div>
+                    <p id="totalStops" class="text-[10px] font-bold text-blue-500 dark:text-blue-400 mt-1 uppercase">총 0 Stop 감소</p>
+                </div>
+            </div>
+            
         </div>
 
-        <!-- Controls Layout -->
-        <div class="space-y-6">
-          <!-- CPL Switch -->
-          <div class="flex items-center justify-between px-2">
-            <div>
-              <span class="text-base font-bold">CPL Filter</span>
-              <p class="text-[10px] text-zinc-400">1.3 Stop 추가 차단</p>
-            </div>
-            <label
-              for="cplToggle"
-              class="relative inline-flex items-center cursor-pointer"
-            >
-              <input type="checkbox" id="cplToggle" class="sr-only" />
-              <div
-                class="toggle-bg w-14 h-8 bg-zinc-200 dark:bg-zinc-800 rounded-full transition-colors duration-300"
-              ></div>
-              <div
-                class="toggle-dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 shadow-sm"
-              ></div>
-            </label>
-          </div>
+        <!-- Wide Web View Guide -->
+        <div class="hidden lg:block w-1/2 space-y-6">
+            <div class="bg-white dark:bg-zinc-900 p-8 rounded-[32px] border border-zinc-100 dark:border-zinc-800 h-full">
+                <h2 class="text-xl font-black mb-8 dark:text-white">Professional Shooting Tips</h2>
+                
+                <div class="space-y-10">
+                    <section>
+                        <h3 class="font-bold flex items-center gap-2 text-blue-500 dark:text-blue-400">
+                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> 바다의 몽환적인 연출
+                        </h3>
+                        <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-2 leading-relaxed">
+                            30초 이상의 장노출은 거친 파도를 구름이나 안개처럼 바꿔줍니다. 수평선을 깔끔하게 정리하고 정적인 분위기를 만드는데 ND1000 필터가 가장 많이 쓰입니다.
+                        </p>
+                    </section>
 
-          <!-- Picker Sections -->
-          <div class="space-y-4">
-            <!-- Filter 1 -->
-            <div class="bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl py-3">
-              <div class="px-5 mb-1 flex justify-between">
-                <span
-                  class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest"
-                  >Filter 01</span
-                >
-                <span id="nd1Value" class="text-[10px] font-bold text-blue-500"
-                  >ND1000</span
-                >
-              </div>
-              <div class="picker-container relative w-full h-16">
-                <div
-                  class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-8 border-y border-zinc-200 dark:border-zinc-700 pointer-events-none"
-                ></div>
-                <div
-                  id="nd1Picker"
-                  class="picker-scroll flex overflow-x-auto snap-x snap-mandatory h-full items-center no-scrollbar"
-                ></div>
-              </div>
-            </div>
+                    <section>
+                        <h3 class="font-bold flex items-center gap-2 text-blue-500 dark:text-blue-400">
+                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> 계곡 물줄기 궤적
+                        </h3>
+                        <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-2 leading-relaxed">
+                            1/4초에서 1초 사이는 물의 질감이 살아있는 궤적을 남깁니다. 너무 길면 질감이 사라지므로 ND8~ND64 정도를 추천합니다.
+                        </p>
+                    </section>
 
-            <!-- Filter 2 -->
-            <div class="bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl py-3">
-              <div class="px-5 mb-1 flex justify-between">
-                <span
-                  class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest"
-                  >Filter 02</span
-                >
-                <span id="nd2Value" class="text-[10px] font-bold text-blue-500"
-                  >OFF</span
-                >
-              </div>
-              <div class="picker-container relative w-full h-16">
-                <div
-                  class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-8 border-y border-zinc-200 dark:border-zinc-700 pointer-events-none"
-                ></div>
-                <div
-                  id="nd2Picker"
-                  class="picker-scroll flex overflow-x-auto snap-x snap-mandatory h-full items-center no-scrollbar"
-                ></div>
-              </div>
+                    <div class="p-6 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                        <h4 class="text-xs font-black uppercase tracking-widest mb-4 dark:text-zinc-300">Checklist</h4>
+                        <ul class="text-xs text-zinc-500 dark:text-zinc-400 space-y-3">
+                            <li>• 렌즈 손떨림 방지(Stabilization) 기능 반드시 끄기</li>
+                            <li>• 셔터를 누를 때의 미세한 흔들림 방지를 위한 타이머 활용</li>
+                            <li>• 장노출 중 빛샘 방지를 위해 DSLR은 뷰파인더 덮개 사용</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-
-            <!-- Base Shutter -->
-            <div class="bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl py-3">
-              <div class="px-5 mb-1 flex justify-between">
-                <span
-                  class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest"
-                  >Base Shutter</span
-                >
-                <span id="baseValue" class="text-[10px] font-bold text-blue-500"
-                  >1/60</span
-                >
-              </div>
-              <div class="picker-container relative w-full h-16">
-                <div
-                  class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-8 border-y border-zinc-200 dark:border-zinc-700 pointer-events-none"
-                ></div>
-                <div
-                  id="shutterPicker"
-                  class="picker-scroll flex overflow-x-auto snap-x snap-mandatory h-full items-center no-scrollbar"
-                ></div>
-              </div>
-            </div>
-          </div>
         </div>
-
-        <!-- Floating Result Area -->
-        <div class="floating-result p-6 flex items-center justify-between">
-          <button
-            id="resetBtn"
-            class="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center active:scale-95 transition-transform"
-          >
-            <svg
-              class="w-5 h-5 text-zinc-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              ></path>
-            </svg>
-          </button>
-          <div class="text-right">
-            <p
-              class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-0.5"
-            >
-              Final Shutter
-            </p>
-            <div
-              id="finalShutter"
-              class="text-4xl font-black tabular-nums tracking-tighter leading-none"
-            >
-              --
-            </div>
-            <p
-              id="totalStops"
-              class="text-[10px] font-bold text-blue-500 mt-1 uppercase"
-            >
-              총 0 Stop 감소
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Wide Web View Guide -->
-      <div class="hidden lg:block w-1/2 space-y-6">
-        <div
-          class="bg-white dark:bg-zinc-900 p-8 rounded-[32px] border border-zinc-100 dark:border-zinc-800 h-full"
-        >
-          <h2 class="text-xl font-black mb-8">Professional Shooting Tips</h2>
-
-          <div class="space-y-10">
-            <section>
-              <h3 class="font-bold flex items-center gap-2 text-blue-500">
-                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                바다의 몽환적인 연출
-              </h3>
-              <p class="text-sm text-zinc-500 mt-2 leading-relaxed">
-                30초 이상의 장노출은 거친 파도를 구름이나 안개처럼 바꿔줍니다.
-                수평선을 깔끔하게 정리하고 정적인 분위기를 만드는데 ND1000
-                필터가 가장 많이 쓰입니다.
-              </p>
-            </section>
-
-            <section>
-              <h3 class="font-bold flex items-center gap-2 text-blue-500">
-                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> 계곡
-                물줄기 궤적
-              </h3>
-              <p class="text-sm text-zinc-500 mt-2 leading-relaxed">
-                1/4초에서 1초 사이는 물의 질감이 살아있는 궤적을 남깁니다. 너무
-                길면 질감이 사라지므로 ND8~ND64 정도를 추천합니다.
-              </p>
-            </section>
-
-            <div
-              class="p-6 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800"
-            >
-              <h4 class="text-xs font-black uppercase tracking-widest mb-4">
-                Checklist
-              </h4>
-              <ul class="text-xs text-zinc-500 space-y-3">
-                <li>• 렌즈 손떨림 방지(Stabilization) 기능 반드시 끄기</li>
-                <li>
-                  • 셔터를 누를 때의 미세한 흔들림 방지를 위한 타이머 활용
-                </li>
-                <li>• 장노출 중 빛샘 방지를 위해 DSLR은 뷰파인더 덮개 사용</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <script>
-      const ndFilters = [
-        { label: "OFF", stops: 0 },
-        { label: "ND2", stops: 1 },
-        { label: "ND4", stops: 2 },
-        { label: "ND8", stops: 3 },
-        { label: "ND16", stops: 4 },
-        { label: "ND32", stops: 5 },
-        { label: "ND64", stops: 6 },
-        { label: "ND128", stops: 7 },
-        { label: "ND256", stops: 8 },
-        { label: "ND500", stops: 9 },
-        { label: "ND1000", stops: 10 },
-      ];
+        const ndFilters = [
+            { label: 'OFF', stops: 0 },
+            { label: 'ND2', stops: 1 },
+            { label: 'ND4', stops: 2 },
+            { label: 'ND8', stops: 3 },
+            { label: 'ND16', stops: 4 },
+            { label: 'ND32', stops: 5 },
+            { label: 'ND64', stops: 6 },
+            { label: 'ND128', stops: 7 },
+            { label: 'ND256', stops: 8 },
+            { label: 'ND500', stops: 9 },
+            { label: 'ND1000', stops: 10 }
+        ];
 
-      const shutterSpeeds = [
-        { label: "1/4000", value: 1 / 4000 },
-        { label: "1/2000", value: 1 / 2000 },
-        { label: "1/1000", value: 1 / 1000 },
-        { label: "1/500", value: 1 / 500 },
-        { label: "1/250", value: 1 / 250 },
-        { label: "1/125", value: 1 / 125 },
-        { label: "1/60", value: 1 / 60 },
-        { label: "1/30", value: 1 / 30 },
-        { label: "1/15", value: 1 / 15 },
-        { label: "1/8", value: 1 / 8 },
-        { label: "1/4", value: 1 / 4 },
-        { label: "1/2", value: 1 / 2 },
-        { label: '1"', value: 1 },
-        { label: '2"', value: 2 },
-        { label: '4"', value: 4 },
-        { label: '8"', value: 8 },
-        { label: '15"', value: 15 },
-        { label: '30"', value: 30 },
-      ];
+        const shutterSpeeds = [
+            { label: '1/4000', value: 1/4000 }, { label: '1/2000', value: 1/2000 },
+            { label: '1/1000', value: 1/1000 }, { label: '1/500', value: 1/500 },
+            { label: '1/250', value: 1/250 }, { label: '1/125', value: 1/125 },
+            { label: '1/60', value: 1/60 }, { label: '1/30', value: 1/30 },
+            { label: '1/15', value: 1/15 }, { label: '1/8', value: 1/8 },
+            { label: '1/4', value: 1/4 }, { label: '1/2', value: 1/2 },
+            { label: '1"', value: 1 }, { label: '2"', value: 2 },
+            { label: '4"', value: 4 }, { label: '8"', value: 8 },
+            { label: '15"', value: 15 }, { label: '30"', value: 30 }
+        ];
 
-      let currentND1 = 10;
-      let currentND2 = 0;
-      let currentShutter = 6;
-      const itemWidth = 100; // 너비를 좀 더 늘려 가독성 확보
+        let currentND1 = 10;
+        let currentND2 = 0;
+        let currentShutter = 6;
+        const itemWidth = 100;
 
-      function initPicker(id, data, defaultIdx, displayId, onSelect) {
-        const container = document.getElementById(id);
-        const display = document.getElementById(displayId);
-        container.innerHTML = "";
+        function initPicker(id, data, defaultIdx, displayId, onSelect) {
+            const container = document.getElementById(id);
+            const display = document.getElementById(displayId);
+            container.innerHTML = '';
+            
+            // 컨테이너 너비를 확보하여 스크롤 범위를 정확히 계산
+            const halfContainer = container.parentElement.offsetWidth / 2;
+            const spacerWidth = halfContainer - (itemWidth / 2);
 
-        const spacer = `calc(50% - ${itemWidth / 2}px)`;
-        container.appendChild(
-          Object.assign(document.createElement("div"), {
-            className: "shrink-0",
-            style: `width: ${spacer}`,
-          }),
-        );
+            const leftSpacer = document.createElement('div');
+            leftSpacer.className = 'shrink-0';
+            leftSpacer.style.width = `${spacerWidth}px`;
+            container.appendChild(leftSpacer);
 
-        const items = data.map((d, i) => {
-          const el = document.createElement("div");
-          el.className = `picker-item snap-center shrink-0 text-center cursor-pointer text-base font-medium`;
-          el.style.width = `${itemWidth}px`;
-          el.innerText = d.label;
-          el.onclick = () =>
-            container.scrollTo({ left: i * itemWidth, behavior: "smooth" });
-          container.appendChild(el);
-          return el;
+            const items = data.map((d, i) => {
+                const el = document.createElement('div');
+                el.className = `picker-item snap-center shrink-0 text-center cursor-pointer text-base font-medium`;
+                el.style.width = `${itemWidth}px`;
+                el.innerText = d.label;
+                el.onclick = () => container.scrollTo({ left: i * itemWidth, behavior: 'smooth' });
+                container.appendChild(el);
+                return el;
+            });
+
+            const rightSpacer = document.createElement('div');
+            rightSpacer.className = 'shrink-0';
+            rightSpacer.style.width = `${spacerWidth}px`;
+            container.appendChild(rightSpacer);
+
+            let timer;
+            container.onscroll = () => {
+                // 정확한 인덱스 계산 (scrollLeft가 음수가 되지 않도록 방지)
+                const scrollLeft = Math.max(0, container.scrollLeft);
+                const idx = Math.min(data.length - 1, Math.round(scrollLeft / itemWidth));
+                
+                items.forEach((el, i) => {
+                    if (i === idx) {
+                        el.classList.add('active');
+                    } else {
+                        el.classList.remove('active');
+                    }
+                });
+
+                if (display.innerText !== data[idx].label) {
+                    display.innerText = data[idx].label;
+                    clearTimeout(timer);
+                    timer = setTimeout(() => onSelect(idx), 30);
+                }
+            };
+
+            // 초기 위치 설정 (DOM 렌더링 후 실행)
+            setTimeout(() => {
+                container.scrollTo({ left: defaultIdx * itemWidth });
+            }, 100);
+
+            return { 
+                scroll: (idx) => container.scrollTo({ left: idx * itemWidth, behavior: 'smooth' }),
+                refreshSpacers: () => {
+                    const newHalf = container.parentElement.offsetWidth / 2;
+                    const newSpacer = newHalf - (itemWidth / 2);
+                    leftSpacer.style.width = `${newSpacer}px`;
+                    rightSpacer.style.width = `${newSpacer}px`;
+                }
+            };
+        }
+
+        function calculate() {
+            const base = shutterSpeeds[currentShutter].value;
+            const stops = ndFilters[currentND1].stops + ndFilters[currentND2].stops + (document.getElementById('cplToggle').checked ? 1.3 : 0);
+            const res = base * Math.pow(2, stops);
+
+            document.getElementById('totalStops').innerText = `총 ${stops.toFixed(1)} Stop 감소`;
+            
+            const display = document.getElementById('finalShutter');
+            if (res >= 3600) {
+                display.innerHTML = `${Math.floor(res/3600)}<span class="text-lg">h</span> ${Math.floor((res%3600)/60)}<span class="text-lg">m</span>`;
+            } else if (res >= 60) {
+                display.innerHTML = `${Math.floor(res/60)}<span class="text-lg">m</span> ${Math.round(res%60)}<span class="text-lg">s</span>`;
+            } else if (res >= 1) {
+                display.innerHTML = `${res < 10 ? res.toFixed(1) : Math.round(res)}<span class="text-lg">s</span>`;
+            } else {
+                display.innerHTML = `<span class="text-xl opacity-40 dark:opacity-50">1/</span>${Math.round(1/res)}<span class="text-lg">s</span>`;
+            }
+        }
+
+        const p1 = initPicker('nd1Picker', ndFilters, 10, 'nd1Value', (v) => { currentND1 = v; calculate(); });
+        const p2 = initPicker('nd2Picker', ndFilters, 0, 'nd2Value', (v) => { currentND2 = v; calculate(); });
+        const p3 = initPicker('shutterPicker', shutterSpeeds, 6, 'baseValue', (v) => { currentShutter = v; calculate(); });
+
+        document.getElementById('cplToggle').onchange = calculate;
+        document.getElementById('themeToggle').onclick = () => {
+            document.documentElement.classList.toggle('dark');
+        };
+
+        document.getElementById('resetBtn').onclick = () => {
+            document.getElementById('cplToggle').checked = false;
+            p1.scroll(10); p2.scroll(0); p3.scroll(6);
+            calculate();
+        };
+
+        // 윈도우 리사이즈 시 스페이서 갱신
+        window.addEventListener('resize', () => {
+            p1.refreshSpacers();
+            p2.refreshSpacers();
+            p3.refreshSpacers();
         });
 
-        container.appendChild(
-          Object.assign(document.createElement("div"), {
-            className: "shrink-0",
-            style: `width: ${spacer}`,
-          }),
-        );
-
-        let timer;
-        container.onscroll = () => {
-          const idx = Math.min(
-            data.length - 1,
-            Math.max(0, Math.round(container.scrollLeft / itemWidth)),
-          );
-          items.forEach((el, i) => el.classList.toggle("active", i === idx));
-          display.innerText = data[idx].label;
-          clearTimeout(timer);
-          timer = setTimeout(() => onSelect(idx), 50);
-        };
-
-        setTimeout(
-          () => container.scrollTo({ left: defaultIdx * itemWidth }),
-          100,
-        );
-        return {
-          scroll: (idx) =>
-            container.scrollTo({ left: idx * itemWidth, behavior: "smooth" }),
-        };
-      }
-
-      function calculate() {
-        const base = shutterSpeeds[currentShutter].value;
-        const stops =
-          ndFilters[currentND1].stops +
-          ndFilters[currentND2].stops +
-          (document.getElementById("cplToggle").checked ? 1.3 : 0);
-        const res = base * Math.pow(2, stops);
-
-        document.getElementById("totalStops").innerText =
-          `총 ${stops.toFixed(1)} Stop 감소`;
-
-        const display = document.getElementById("finalShutter");
-        if (res >= 3600) {
-          display.innerHTML = `${Math.floor(res / 3600)}<span class="text-lg">h</span> ${Math.floor((res % 3600) / 60)}<span class="text-lg">m</span>`;
-        } else if (res >= 60) {
-          display.innerHTML = `${Math.floor(res / 60)}<span class="text-lg">m</span> ${Math.round(res % 60)}<span class="text-lg">s</span>`;
-        } else if (res >= 1) {
-          display.innerHTML = `${res < 10 ? res.toFixed(1) : Math.round(res)}<span class="text-lg">s</span>`;
-        } else {
-          display.innerHTML = `<span class="text-xl opacity-40">1/</span>${Math.round(1 / res)}<span class="text-lg">s</span>`;
-        }
-      }
-
-      const p1 = initPicker("nd1Picker", ndFilters, 10, "nd1Value", (v) => {
-        currentND1 = v;
         calculate();
-      });
-      const p2 = initPicker("nd2Picker", ndFilters, 0, "nd2Value", (v) => {
-        currentND2 = v;
-        calculate();
-      });
-      const p3 = initPicker(
-        "shutterPicker",
-        shutterSpeeds,
-        6,
-        "baseValue",
-        (v) => {
-          currentShutter = v;
-          calculate();
-        },
-      );
-
-      document.getElementById("cplToggle").onchange = calculate;
-      document.getElementById("themeToggle").onclick = () =>
-        document.body.classList.toggle("dark");
-      document.getElementById("resetBtn").onclick = () => {
-        document.getElementById("cplToggle").checked = false;
-        p1.scroll(10);
-        p2.scroll(0);
-        p3.scroll(6);
-        calculate();
-      };
-
-      calculate();
     </script>
-  </body>
+</body>
 </html>
