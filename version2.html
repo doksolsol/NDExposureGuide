@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>프로 ND & CPL 노출 계산기</title>
+    <!-- Pretendard Font -->
+    <link
+      rel="stylesheet"
+      as="style"
+      crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        --bg-color: #f4f4f5;
+        --card-bg: #ffffff;
+        --text-main: #18181b;
+        --text-muted: #a1a1aa;
+        --accent: #000000;
+        --picker-mask: linear-gradient(
+          to right,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 255, 255, 1) 30%,
+          rgba(255, 255, 255, 1) 70%,
+          rgba(255, 255, 255, 0) 100%
+        );
+      }
+
+      .dark {
+        --bg-color: #09090b;
+        --card-bg: #18181b;
+        --text-main: #f4f4f5;
+        --text-muted: #52525b;
+        --accent: #ffffff;
+        --picker-mask: linear-gradient(
+          to right,
+          rgba(0, 0, 0, 0) 0%,
+          rgba(0, 0, 0, 1) 30%,
+          rgba(0, 0, 0, 1) 70%,
+          rgba(0, 0, 0, 0) 100%
+        );
+      }
+
+      body {
+        font-family:
+          "Pretendard",
+          -apple-system,
+          BlinkMacSystemFont,
+          system-ui,
+          Roboto,
+          "Helvetica Neue",
+          "Segoe UI",
+          "Apple SD Gothic Neo",
+          "Noto Sans KR",
+          "Malgun Gothic",
+          sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* Hide Scrollbar but keep functionality */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* Toggle Switch */
+      .toggle-checkbox:checked {
+        right: 0;
+        border-color: var(--accent);
+      }
+      .toggle-checkbox:checked + .toggle-label {
+        background-color: var(--accent);
+      }
+      .toggle-checkbox {
+        right: 0;
+        z-index: 1;
+        border-color: #e4e4e7;
+        transition: all 0.3s;
+      }
+      .dark .toggle-checkbox {
+        border-color: #3f3f46;
+      }
+      .toggle-label {
+        width: 3rem;
+        height: 1.5rem;
+        background-color: #e4e4e7;
+        border-radius: 9999px;
+        transition: all 0.3s;
+      }
+      .dark .toggle-label {
+        background-color: #3f3f46;
+      }
+
+      /* Picker Container Styles */
+      .picker-container {
+        -webkit-mask-image: var(--picker-mask);
+        mask-image: var(--picker-mask);
+        /* Adds a subtle camera lens ring texture background */
+        background-image: repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 4px,
+          rgba(150, 150, 150, 0.05) 4px,
+          rgba(150, 150, 150, 0.05) 5px
+        );
+      }
+
+      .picker-item {
+        transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        transform-origin: center;
+      }
+
+      /* Active item scaling and coloring */
+      .picker-item.active {
+        transform: scale(1.6);
+        font-weight: 800;
+        color: var(--accent);
+        opacity: 1;
+      }
+
+      /* Layout utilities */
+      .w-95 {
+        width: 95%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .full-bleed {
+        width: 100vw;
+        margin-left: calc(-50vw + 50%);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen pb-24 overflow-x-hidden">
+    <div
+      class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 pt-8 px-4 lg:px-8"
+    >
+      <!-- Left / Main Mobile UI (Calculator) -->
+      <div class="w-full lg:w-1/2 lg:max-w-md mx-auto relative">
+        <!-- Header -->
+        <div
+          class="flex justify-between items-end mb-10 w-95 border-b-2 border-zinc-200 dark:border-zinc-800 pb-4"
+        >
+          <div>
+            <h1 class="text-3xl font-black tracking-tight uppercase">
+              ND Filter
+            </h1>
+            <p class="text-xs font-medium text-zinc-500 tracking-widest mt-1">
+              EXPOSURE CALCULATOR
+            </p>
+          </div>
+          <button
+            id="themeToggle"
+            class="p-2 opacity-60 hover:opacity-100 transition-opacity"
+          >
+            <svg
+              id="sunIcon"
+              class="w-6 h-6 hidden dark:block"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-11.314l.707.707m11.314 11.314l.707.707M12 8a4 4 0 110 8 4 4 0 010-8z"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></path>
+            </svg>
+            <svg
+              id="moonIcon"
+              class="w-6 h-6 dark:hidden"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Controls -->
+        <div class="space-y-8">
+          <!-- CPL Filter -->
+          <div class="w-95 flex items-center justify-between">
+            <div>
+              <span class="text-lg font-bold">CPL 필터</span>
+              <span class="text-xs text-zinc-400 ml-2 font-normal"
+                >약 1.3 Stop 감소</span
+              >
+            </div>
+            <div
+              class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in"
+            >
+              <input
+                type="checkbox"
+                name="toggle"
+                id="cplToggle"
+                class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+              />
+              <label
+                for="cplToggle"
+                class="toggle-label block overflow-hidden h-6 rounded-full cursor-pointer"
+              ></label>
+            </div>
+          </div>
+
+          <div class="w-95 h-px bg-zinc-200 dark:bg-zinc-800 my-4"></div>
+
+          <!-- ND Filter 1 -->
+          <div>
+            <div class="w-95 mb-2">
+              <span
+                class="text-sm font-bold text-zinc-500 uppercase tracking-wider"
+                >Filter ①</span
+              >
+            </div>
+            <!-- Full bleed container for edge-to-edge swiping -->
+            <div class="full-bleed lg:w-full lg:mx-0">
+              <div class="picker-container relative w-full h-24">
+                <div
+                  class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-20 h-10 border-y border-zinc-300 dark:border-zinc-700 pointer-events-none opacity-50"
+                ></div>
+                <div
+                  id="nd1Picker"
+                  class="picker-scroll flex overflow-x-auto snap-x snap-mandatory h-full items-center no-scrollbar"
+                >
+                  <!-- Items injected by JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ND Filter 2 -->
+          <div>
+            <div class="w-95 mb-2">
+              <span
+                class="text-sm font-bold text-zinc-500 uppercase tracking-wider"
+                >Filter ②</span
+              >
+            </div>
+            <div class="full-bleed lg:w-full lg:mx-0">
+              <div class="picker-container relative w-full h-24">
+                <div
+                  class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-20 h-10 border-y border-zinc-300 dark:border-zinc-700 pointer-events-none opacity-50"
+                ></div>
+                <div
+                  id="nd2Picker"
+                  class="picker-scroll flex overflow-x-auto snap-x snap-mandatory h-full items-center no-scrollbar"
+                >
+                  <!-- Items injected by JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="w-95 h-px bg-zinc-200 dark:bg-zinc-800 my-4"></div>
+
+          <!-- Base Shutter Speed -->
+          <div>
+            <div class="w-95 mb-2">
+              <span
+                class="text-sm font-bold text-zinc-500 uppercase tracking-wider"
+                >Base Shutter Speed</span
+              >
+              <span class="text-xs text-zinc-400 ml-2">(필터 장착 전)</span>
+            </div>
+            <div class="full-bleed lg:w-full lg:mx-0">
+              <div class="picker-container relative w-full h-24">
+                <div
+                  class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-10 border-y border-zinc-300 dark:border-zinc-700 pointer-events-none opacity-50"
+                ></div>
+                <div
+                  id="shutterPicker"
+                  class="picker-scroll flex overflow-x-auto snap-x snap-mandatory h-full items-center no-scrollbar"
+                >
+                  <!-- Items injected by JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Result Area -->
+        <div class="mt-12 w-95 relative">
+          <!-- Reset Button (Bottom Left) -->
+          <button
+            id="resetBtn"
+            class="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border-2 border-zinc-300 dark:border-zinc-700 flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors active:scale-90 z-10"
+          >
+            <svg
+              class="w-5 h-5 opacity-70"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              ></path>
+            </svg>
+          </button>
+
+          <!-- Result Display -->
+          <div class="pl-16 text-right">
+            <p
+              class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1"
+            >
+              Target Exposure
+            </p>
+            <div
+              id="finalShutter"
+              class="text-6xl font-black tabular-nums tracking-tighter"
+            >
+              --
+            </div>
+            <p id="totalStops" class="text-sm font-medium text-zinc-500 mt-2">
+              총 0 Stop 감소
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right / Desktop Info UI (Hidden on Mobile) -->
+      <div class="hidden lg:block w-full lg:w-1/2 space-y-6 pt-10">
+        <div
+          class="bg-white dark:bg-zinc-900 p-8 rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800"
+        >
+          <h2
+            class="text-xl font-black mb-6 border-b pb-4 border-zinc-100 dark:border-zinc-800"
+          >
+            장노출 촬영 가이드
+          </h2>
+
+          <div class="space-y-8">
+            <div>
+              <h3 class="font-bold text-lg mb-2 flex items-center gap-2">
+                <span
+                  class="w-2 h-2 rounded-full bg-black dark:bg-white"
+                ></span>
+                바다와 파도
+              </h3>
+              <p
+                class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed pl-4"
+              >
+                <strong>1/2초 ~ 2초:</strong> 부서지는 파도의 궤적과 포말의 거친
+                질감을 역동적으로 살릴 때 사용합니다.<br />
+                <strong>30초 이상:</strong> 거친 파도를 마치 안개나 구름처럼
+                부드럽고 몽환적으로 표현(운해 효과)할 때 적합합니다.
+              </p>
+            </div>
+
+            <div>
+              <h3 class="font-bold text-lg mb-2 flex items-center gap-2">
+                <span
+                  class="w-2 h-2 rounded-full bg-black dark:bg-white"
+                ></span>
+                계곡과 폭포
+              </h3>
+              <p
+                class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed pl-4"
+              >
+                <strong>1/8초 ~ 1/2초:</strong> 물줄기의 결을 선명하게
+                살리면서도 흐름을 보여주는 생동감 있는 연출.<br />
+                <strong>1초 ~ 4초:</strong> 물줄기가 비단결처럼 부드럽게
+                이어지는 전통적인 폭포 장노출.
+              </p>
+            </div>
+
+            <div class="bg-zinc-50 dark:bg-zinc-800/50 p-5 rounded-2xl">
+              <h3 class="font-bold text-sm mb-3">🚨 촬영 전 필수 체크</h3>
+              <ul class="text-sm text-zinc-600 dark:text-zinc-400 space-y-2">
+                <li>• 삼각대는 단단한 지면에 튼튼하게 고정하기</li>
+                <li>
+                  • 렌즈의 <strong>손떨림 보정 기능(IS, VR, OSS) 끄기</strong>
+                </li>
+                <li>
+                  • 릴리즈를 사용하거나 <strong>2초 타이머</strong>로 셔터 누를
+                  때의 진동 방지
+                </li>
+                <li>• DSLR의 경우 뷰파인더로 들어오는 빛 차단(가림막 사용)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-center text-xs text-zinc-400 mt-8">
+          Design optimized for Mobile & Desktop
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // Data Definitions
+      const ndFilters = [
+        { label: "OFF", stops: 0 },
+        { label: "ND2", stops: 1 },
+        { label: "ND4", stops: 2 },
+        { label: "ND8", stops: 3 },
+        { label: "ND16", stops: 4 },
+        { label: "ND32", stops: 5 },
+        { label: "ND64", stops: 6 },
+        { label: "ND128", stops: 7 },
+        { label: "ND256", stops: 8 },
+        { label: "ND500", stops: 9 },
+        { label: "ND1000", stops: 10 },
+        { label: "ND2000", stops: 11 },
+        { label: "ND4000", stops: 12 },
+      ];
+
+      const shutterSpeeds = [
+        { label: "1/8000", value: 1 / 8000 },
+        { label: "1/4000", value: 1 / 4000 },
+        { label: "1/2000", value: 1 / 2000 },
+        { label: "1/1000", value: 1 / 1000 },
+        { label: "1/500", value: 1 / 500 },
+        { label: "1/250", value: 1 / 250 },
+        { label: "1/125", value: 1 / 125 },
+        { label: "1/60", value: 1 / 60 },
+        { label: "1/30", value: 1 / 30 },
+        { label: "1/15", value: 1 / 15 },
+        { label: "1/8", value: 1 / 8 },
+        { label: "1/4", value: 1 / 4 },
+        { label: "1/2", value: 1 / 2 },
+        { label: '1"', value: 1 },
+        { label: '2"', value: 2 },
+        { label: '4"', value: 4 },
+        { label: '8"', value: 8 },
+        { label: '15"', value: 15 },
+        { label: '30"', value: 30 },
+      ];
+
+      // State Variables
+      let currentND1Index = 10; // Default ND1000
+      let currentND2Index = 0; // Default OFF
+      let currentShutterIndex = 7; // Default 1/60
+
+      const itemWidth = 80; // px (Width of each picker item)
+
+      // DOM Elements
+      const cplToggle = document.getElementById("cplToggle");
+      const finalShutterDisplay = document.getElementById("finalShutter");
+      const totalStopsDisplay = document.getElementById("totalStops");
+      const resetBtn = document.getElementById("resetBtn");
+      const themeToggle = document.getElementById("themeToggle");
+
+      // Theme Setup
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        document.body.classList.add("dark");
+      }
+      themeToggle.addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+      });
+
+      // Initialize Picker
+      function initPicker(containerId, data, defaultIndex, onSelectCallback) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = "";
+
+        // Add spacer to allow first and last items to be centered
+        const spacerWidth = `calc(50% - ${itemWidth / 2}px)`;
+
+        const startSpacer = document.createElement("div");
+        startSpacer.className = "shrink-0";
+        startSpacer.style.width = spacerWidth;
+        container.appendChild(startSpacer);
+
+        const items = [];
+
+        data.forEach((item, index) => {
+          const div = document.createElement("div");
+          div.className = `picker-item snap-center shrink-0 w-[${itemWidth}px] text-center text-zinc-400 dark:text-zinc-500 cursor-pointer select-none text-lg`;
+          div.style.width = `${itemWidth}px`;
+          div.innerText = item.label;
+
+          // Click to scroll into view
+          div.addEventListener("click", () => {
+            container.scrollTo({
+              left: index * itemWidth,
+              behavior: "smooth",
+            });
+          });
+
+          items.push(div);
+          container.appendChild(div);
+        });
+
+        const endSpacer = document.createElement("div");
+        endSpacer.className = "shrink-0";
+        endSpacer.style.width = spacerWidth;
+        container.appendChild(endSpacer);
+
+        // Scroll Logic to detect center item
+        let scrollTimeout;
+        container.addEventListener("scroll", () => {
+          // Find item closest to center
+          const scrollLeft = container.scrollLeft;
+          let activeIndex = Math.round(scrollLeft / itemWidth);
+
+          // Bounds check
+          if (activeIndex < 0) activeIndex = 0;
+          if (activeIndex >= data.length) activeIndex = data.length - 1;
+
+          // Update styling
+          items.forEach((el, i) => {
+            if (i === activeIndex) {
+              el.classList.add("active");
+              el.classList.remove("text-zinc-400", "dark:text-zinc-500");
+            } else {
+              el.classList.remove("active");
+              el.classList.add("text-zinc-400", "dark:text-zinc-500");
+            }
+          });
+
+          // Trigger calculation (debounce slighty for performance)
+          clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(() => {
+            onSelectCallback(activeIndex);
+          }, 50);
+        });
+
+        // Set Initial Scroll Position (Wait for paint)
+        setTimeout(() => {
+          container.scrollTo({
+            left: defaultIndex * itemWidth,
+            behavior: "auto",
+          });
+          // Manually trigger visual update for initial state
+          items[defaultIndex].classList.add("active");
+          items[defaultIndex].classList.remove(
+            "text-zinc-400",
+            "dark:text-zinc-500",
+          );
+          onSelectCallback(defaultIndex);
+        }, 100);
+
+        return {
+          setIndex: (idx) => {
+            container.scrollTo({ left: idx * itemWidth, behavior: "smooth" });
+          },
+        };
+      }
+
+      // Calculation Logic
+      function calculate() {
+        const baseSec = shutterSpeeds[currentShutterIndex].value;
+        const stops1 = ndFilters[currentND1Index].stops;
+        const stops2 = ndFilters[currentND2Index].stops;
+        const cplStops = cplToggle.checked ? 1.3 : 0;
+
+        const totalStops = stops1 + stops2 + cplStops;
+        const calculatedSeconds = baseSec * Math.pow(2, totalStops);
+
+        totalStopsDisplay.innerText = `총 ${totalStops.toFixed(1)} Stop 감소`;
+
+        // Formatting output
+        if (calculatedSeconds === 0) {
+          finalShutterDisplay.innerText = "--";
+        } else if (calculatedSeconds >= 3600) {
+          const hrs = Math.floor(calculatedSeconds / 3600);
+          const mins = Math.floor((calculatedSeconds % 3600) / 60);
+          finalShutterDisplay.innerHTML = `${hrs}<span class="text-2xl font-bold text-zinc-400">h</span> ${mins}<span class="text-2xl font-bold text-zinc-400">m</span>`;
+        } else if (calculatedSeconds >= 60) {
+          const mins = Math.floor(calculatedSeconds / 60);
+          const secs = Math.round(calculatedSeconds % 60);
+          finalShutterDisplay.innerHTML = `${mins}<span class="text-3xl font-bold text-zinc-400">m</span> ${secs}<span class="text-3xl font-bold text-zinc-400">s</span>`;
+        } else if (calculatedSeconds >= 1) {
+          // Remove decimal if it's a whole number, else show 1 decimal
+          const val = Number.isInteger(calculatedSeconds)
+            ? calculatedSeconds
+            : calculatedSeconds.toFixed(1);
+          finalShutterDisplay.innerHTML = `${val}<span class="text-4xl font-bold text-zinc-400">s</span>`;
+        } else {
+          finalShutterDisplay.innerHTML = `<span class="text-4xl">1/</span>${Math.round(1 / calculatedSeconds)}<span class="text-3xl font-bold text-zinc-400">s</span>`;
+        }
+      }
+
+      // Initialize Pickers
+      const nd1Controller = initPicker(
+        "nd1Picker",
+        ndFilters,
+        currentND1Index,
+        (idx) => {
+          currentND1Index = idx;
+          calculate();
+        },
+      );
+      const nd2Controller = initPicker(
+        "nd2Picker",
+        ndFilters,
+        currentND2Index,
+        (idx) => {
+          currentND2Index = idx;
+          calculate();
+        },
+      );
+      const shutterController = initPicker(
+        "shutterPicker",
+        shutterSpeeds,
+        currentShutterIndex,
+        (idx) => {
+          currentShutterIndex = idx;
+          calculate();
+        },
+      );
+
+      // Event Listeners
+      cplToggle.addEventListener("change", calculate);
+
+      resetBtn.addEventListener("click", () => {
+        cplToggle.checked = false;
+        nd1Controller.setIndex(10); // ND1000
+        nd2Controller.setIndex(0); // OFF
+        shutterController.setIndex(7); // 1/60
+
+        // Add a small animation to reset button
+        resetBtn.style.transform = "rotate(-180deg) scale(0.9)";
+        setTimeout(() => {
+          resetBtn.style.transform = "";
+          resetBtn.style.transition = "transform 0.3s ease";
+        }, 100);
+      });
+
+      // Trigger initial calculation
+      calculate();
+    </script>
+  </body>
+</html>
